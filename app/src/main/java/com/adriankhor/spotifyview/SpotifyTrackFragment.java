@@ -7,11 +7,14 @@ import android.graphics.Canvas;
 import android.graphics.ColorFilter;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,6 +31,8 @@ import java.net.URL;
  */
 
 public class SpotifyTrackFragment extends Fragment {
+    private static final String TAG = "SpotifyTrackFragment";
+
     private static final String ARG_ARTIST_NAME = "spotify_track_artist_name";
     private static final String ARG_TRACK_NAME = "spotify_track_name";
     private static final String ARG_URI = "spotify_track_url";
@@ -39,7 +44,7 @@ public class SpotifyTrackFragment extends Fragment {
     private Uri mTrackUri;
 
     private static SpotifyTrack mSpotifyTrack;
-
+    private static MediaPlayer mMediaPlayer;
     private static ProgressDialog mProgressDialog;
 
     public static SpotifyTrackFragment newInstance(Uri trackUri) {
@@ -59,6 +64,14 @@ public class SpotifyTrackFragment extends Fragment {
         mTrackUri = getArguments().getParcelable(ARG_URI);
 
         new DownloadImage().execute();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if(mMediaPlayer != null) {
+            mMediaPlayer.stop();
+        }
     }
 
     @Nullable
@@ -81,14 +94,12 @@ public class SpotifyTrackFragment extends Fragment {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            // Create a progressdialog
+
             mProgressDialog = new ProgressDialog(getActivity());
-            // Set progressdialog title
-            mProgressDialog.setTitle("Loading image");
-            // Set progressdialog message
+            mProgressDialog.setTitle("Loading track");
             mProgressDialog.setMessage("Loading...");
             mProgressDialog.setIndeterminate(false);
-            // Show progressdialog
+
             mProgressDialog.show();
         }
 
@@ -98,10 +109,9 @@ public class SpotifyTrackFragment extends Fragment {
             String imageURL = mSpotifyTrack.getTrackPreviewImage().toString();
 
             Bitmap bitmap = null;
+
             try {
-                // Download Image from URL
                 InputStream input = new java.net.URL(imageURL).openStream();
-                // Decode Bitmap
                 bitmap = BitmapFactory.decodeStream(input);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -117,9 +127,28 @@ public class SpotifyTrackFragment extends Fragment {
 
             mTrackName.setText(mSpotifyTrack.getName());
             mArtistName.setText(mSpotifyTrack.getArtistName());
-            // Close progressdialog
+
+            playTrack();
+
             mProgressDialog.dismiss();
         }
+
+        // plays the preview track
+        private void playTrack() {
+            mMediaPlayer = new MediaPlayer();
+            mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+
+            try {
+                mMediaPlayer.setDataSource(mSpotifyTrack.getPreviewUri().toString());
+                mMediaPlayer.prepare();
+                mMediaPlayer.start();
+            }
+            catch (IOException ioe) {
+                Log.e(TAG, "Unable to play track", ioe);
+            }
+        }
     }
+
+    // MediaPlayer AsyncTask
 
 }
