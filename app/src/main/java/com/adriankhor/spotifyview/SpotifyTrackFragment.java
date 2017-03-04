@@ -38,9 +38,9 @@ public class SpotifyTrackFragment extends Fragment {
     private ImageView mTrackImage;
     private Uri mTrackUri;
 
-    private SpotifyTrack mSpotifyTrack;
+    private static SpotifyTrack mSpotifyTrack;
 
-    private ProgressDialog mProgressDialog;
+    private static ProgressDialog mProgressDialog;
 
     public static SpotifyTrackFragment newInstance(Uri trackUri) {
         Bundle args = new Bundle();
@@ -76,6 +76,8 @@ public class SpotifyTrackFragment extends Fragment {
     // DownloadImage AsyncTask
     private class DownloadImage extends AsyncTask<Void, Void, Bitmap> {
 
+        private SpotifyTrack mSpotifyTrack;
+
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
@@ -92,8 +94,8 @@ public class SpotifyTrackFragment extends Fragment {
 
         @Override
         protected Bitmap doInBackground(Void... params) {
-            SpotifyTrack track = new SpotifyAlbumFetcher().getTrack(mTrackUri);
-            String imageURL = track.getTrackPreviewImage().toString();
+            mSpotifyTrack = new SpotifyAlbumFetcher().getTrack(mTrackUri);
+            String imageURL = mSpotifyTrack.getTrackPreviewImage().toString();
 
             Bitmap bitmap = null;
             try {
@@ -109,8 +111,12 @@ public class SpotifyTrackFragment extends Fragment {
 
         @Override
         protected void onPostExecute(Bitmap result) {
+
             // Set the bitmap into ImageView
             mTrackImage.setImageBitmap(result);
+
+            mTrackName.setText(mSpotifyTrack.getName());
+            mArtistName.setText(mSpotifyTrack.getArtistName());
             // Close progressdialog
             mProgressDialog.dismiss();
         }
