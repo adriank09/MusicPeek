@@ -2,6 +2,7 @@ package com.adriankhor.spotifyview;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
@@ -51,11 +52,11 @@ public class ThumbnailDownloader<T> extends HandlerThread {
         };
     }
 
-    public void queueThumbnail(T target, String url) {
+    public void queueThumbnail(T target, Uri url) {
         if(url == null) {
             mRequestMap.remove(target);
         } else {
-            mRequestMap.put(target, url);
+            mRequestMap.put(target, url.toString());
             mRequestHandler.obtainMessage(MESSAGE_DOWNLOAD, target).sendToTarget();
         }
     }

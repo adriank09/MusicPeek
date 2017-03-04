@@ -1,10 +1,14 @@
 package com.adriankhor.spotifyview;
 
+import android.app.DownloadManager;
+import android.app.ProgressDialog;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -12,8 +16,12 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -34,11 +42,15 @@ public class SpotifyViewFragment extends Fragment {
     private List<SpotifyTrack> mSpotifyTracks = new ArrayList<>();
     private ThumbnailDownloader<SpotifyViewHolder> mThumbnailDownloader;
 
+    private ProgressDialog mProgressDialog;
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
-        new FetchItemsTask().execute();
+        setHasOptionsMenu(true);
+
+        updateItems();
 
         Handler responseHandler = new Handler();
 
@@ -63,6 +75,53 @@ public class SpotifyViewFragment extends Fragment {
     }
 
     @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.fragment_spotify_track, menu);
+
+        MenuItem searchItem = menu.findItem(R.id.menu_item_search);
+        final SearchView searchView = (SearchView) searchItem.getActionView();
+
+        // listens to changes made on query text
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                QueryPreferences.setStoredQuery(getActivity(), query);
+                updateItems();
+
+                return true;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+        });
+
+        // acts upon the query text
+        searchView.setOnSearchClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String query = QueryPreferences.getStoredQuery(getActivity());
+                searchView.setQuery(query, false);
+            }
+        });
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch(item.getItemId()) {
+            case R.id.menu_item_clear:
+                // clears the stored query
+                QueryPreferences.setStoredQuery(getActivity(), null);
+                updateItems();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
     public void onDestroyView() {
         super.onDestroyView();
         mThumbnailDownloader.clearQueue();
@@ -82,32 +141,75 @@ public class SpotifyViewFragment extends Fragment {
 
     /***** private class for Async FetchItemTask *****/
     private class FetchItemsTask extends AsyncTask<Void,Void,List<SpotifyTrack>> {
+        private String mQuery;
+
+        public FetchItemsTask(String query) {
+            mQuery = query;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            mProgressDialog = new ProgressDialog(getActivity());
+            mProgressDialog.setTitle("Loading tracks");
+            mProgressDialog.setMessage("Loading...");
+            mProgressDialog.setIndeterminate(false);
+
+            mProgressDialog.show();
+        }
+
         @Override
         protected List<SpotifyTrack> doInBackground(Void... params) {
-            return new SpotifyAlbumFetcher().fetchTracks();
+            List<SpotifyTrack> tracks = new ArrayList<>();
+            if(mQuery == null) {
+                tracks = new SpotifyAlbumFetcher().fetchTracks();
+            } else {
+                tracks = new SpotifyAlbumFetcher().searchTracks(mQuery);
+            }
+
+            return tracks;
         }
 
         @Override
         protected void onPostExecute(List<SpotifyTrack> tracks) {
+            Log.i(TAG, "onPostExecute entered");
             mSpotifyTracks = tracks;
+
             setupAdapter();
+            if(mProgressDialog!=null&&mProgressDialog.isShowing()){
+                Log.i(TAG, "mProgressDialog still showing");
+                mProgressDialog.dismiss();
+            }
+            Log.i(TAG, "onPostExecute end");
         }
     }
 
     /***** private class for RecyclerView *****/
-
     // SpotifyViewHolder - to hold data
-    private class SpotifyViewHolder extends RecyclerView.ViewHolder {
+    private class SpotifyViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         private ImageView mItemImageView;
+        private SpotifyTrack mSpotifyTrack;
 
         public SpotifyViewHolder(View itemView) {
             super(itemView);
 
             mItemImageView = (ImageView) itemView.findViewById(R.id.fragment_spotify_track_image);
+            mItemImageView.setOnClickListener(this);
         }
 
         public void bindDrawable(Drawable drawable) {
             mItemImageView.setImageDrawable(drawable);
+        }
+
+        public void bindSpotifyTrack(SpotifyTrack track) {
+            mSpotifyTrack = track;
+        }
+
+        @Override
+        public void onClick(View v) {
+            Intent intent = SpotifyTrackActivity.newIntent(getActivity(), Uri.parse(mSpotifyTrack.getId()));
+            startActivity(intent);
         }
     }
 
@@ -129,6 +231,7 @@ public class SpotifyViewFragment extends Fragment {
         @Override
         public void onBindViewHolder(SpotifyViewHolder holder, int position) {
             SpotifyTrack spotifyTrack = mSpotifyTracks.get(position);
+            holder.bindSpotifyTrack(spotifyTrack);
 
             // places a placeholder image while thumbnail is being asynchronously
             // downloaded from Spotify
@@ -136,7 +239,7 @@ public class SpotifyViewFragment extends Fragment {
             holder.bindDrawable(placeholder);
 
             // subsequently queues the thumbnail
-            mThumbnailDownloader.queueThumbnail(holder, spotifyTrack.getTrackPreviewImage().toString());
+            mThumbnailDownloader.queueThumbnail(holder, spotifyTrack.getTrackPreviewImage());
         }
 
         @Override
@@ -153,6 +256,12 @@ public class SpotifyViewFragment extends Fragment {
     private void setupAdapter() {
         if(isAdded()) {
             mSpotifyViewRecyclerView.setAdapter(new SpotifyViewAdapter(mSpotifyTracks));
+
         }
+    }
+
+    private void updateItems() {
+        String query = QueryPreferences.getStoredQuery(getActivity());
+        new FetchItemsTask(query).execute();
     }
 }

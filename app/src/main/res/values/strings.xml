@@ -1,3 +1,6 @@
 <resources>
-    <string name="app_name">SpotifyView</string>
+    <string name="app_name">Music Peek</string>
+
+    <string name="search">Search</string>
+    <string name="clear_search">Clear Search</string>
 </resources>

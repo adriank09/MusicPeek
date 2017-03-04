@@ -1,16 +1,29 @@
 package com.adriankhor.spotifyview;
 
 import android.net.Uri;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 /**
  * Created by adriank09 on 04/03/2017.
  */
 
-public class SpotifyTrack {
+public class SpotifyTrack{
+
+
     private String mId;
     private String mName;
     private Uri mPreviewMP3Uri;
     private Uri mTrackPreviewImage;
+    private String mArtistName;
+
+    public String getArtistName() {
+        return mArtistName;
+    }
+
+    public void setArtistName(String mArtistName) {
+        this.mArtistName = mArtistName;
+    }
 
     public Uri getTrackPreviewImage() {
         return mTrackPreviewImage;
@@ -19,8 +32,6 @@ public class SpotifyTrack {
     public void setTrackPreviewImage(Uri mTrackPreviewImage) {
         this.mTrackPreviewImage = mTrackPreviewImage;
     }
-
-
 
     public String getId() {
         return mId;
