@@ -1,6 +1,10 @@
 <resources>
     <string name="app_name">Music Peek</string>
 
+    <string name="listen_feed_activity_title">Listen Feed</string>
+
+    <string name="view_feed">View Listen Feed</string>
+
     <string name="search">Search</string>
     <string name="clear_search">Clear Search</string>
 </resources>

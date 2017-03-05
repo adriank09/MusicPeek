@@ -1,6 +1,7 @@
 package com.adriankhor.spotifyview;
 
 import android.app.ProgressDialog;
+import android.content.ContentValues;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.AudioManager;
@@ -20,8 +21,15 @@ import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import com.adriankhor.spotifyview.database.ListenFeedDbAction;
+import com.adriankhor.spotifyview.database.SpotifyViewDbSchema;
+import com.adriankhor.spotifyview.database.SpotifyViewDbSchema.SpotifyViewFeedTable;
+import com.adriankhor.spotifyview.model.ListenFeed;
+import com.adriankhor.spotifyview.model.SpotifyTrack;
+
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Date;
 
 /**
  * Created by adriank09 on 04/03/2017.
@@ -41,8 +49,8 @@ public class SpotifyTrackFragment extends Fragment {
     private Uri mTrackUri;
 
     private ImageButton mPauseButton;
-    private SeekBar mSeekBar;
 
+    private static SpotifyTrack mSpotifyTrack;
     private static MediaPlayer mMediaPlayer;
     private static ProgressDialog mProgressDialog;
 
@@ -63,6 +71,16 @@ public class SpotifyTrackFragment extends Fragment {
         mTrackUri = getArguments().getParcelable(ARG_URI);
 
         new DownloadImage().execute();
+    }
+
+    private void addIntoFeed(SpotifyTrack track) {
+        ListenFeedDbAction db = ListenFeedDbAction.newInstance(getActivity());
+        ListenFeed feed = new ListenFeed();
+        feed.setId(track.getId());
+        feed.setName(track.getName());
+        feed.setArtistName(track.getArtistName());
+
+        db.addListenFeedEntry(feed);
     }
 
     @Override
@@ -95,8 +113,6 @@ public class SpotifyTrackFragment extends Fragment {
                 }
             }
         });
-
-
 
         return v;
     }
@@ -149,13 +165,14 @@ public class SpotifyTrackFragment extends Fragment {
             mTrackName.setText(mSpotifyTrack.getName());
             mArtistName.setText(mSpotifyTrack.getArtistName());
 
+            setActivityTitle(mSpotifyTrack.getName());
+
             bootstrapPlayer();
 
-            setActivityTitle(mSpotifyTrack.getName());
+            addIntoFeed(mSpotifyTrack);
 
             mProgressDialog.dismiss();
         }
-
 
         private void bootstrapPlayer() {
             mMediaPlayer = new MediaPlayer();
@@ -182,7 +199,5 @@ public class SpotifyTrackFragment extends Fragment {
                 Log.e(TAG, "Unable to play track", ioe);
             }
         }
-
     }
-
 }

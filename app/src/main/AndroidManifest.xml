@@ -18,7 +18,9 @@
             </intent-filter>
         </activity>
 
+
         <activity android:name=".SpotifyTrackActivity" android:parentActivityName=".MainActivity"/>
+        <activity android:name=".ListenFeedActivity"/>
     </application>
 
 </manifest>

@@ -1,15 +1,16 @@
-package com.adriankhor.spotifyview;
+package com.adriankhor.spotifyview.model;
 
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
+
+import java.util.Date;
 
 /**
  * Created by adriank09 on 04/03/2017.
  */
 
 public class SpotifyTrack{
-
 
     private String mId;
     private String mName;

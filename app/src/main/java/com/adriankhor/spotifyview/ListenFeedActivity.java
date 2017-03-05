@@ -9,6 +9,6 @@ import android.support.v4.app.Fragment;
 public class ListenFeedActivity extends SingleFragmentActivity {
     @Override
     protected Fragment createFragment() {
-        return null;
+        return ListenFeedFragment.newInstance();
     }
 }

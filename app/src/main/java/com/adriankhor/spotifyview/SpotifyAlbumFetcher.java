@@ -3,6 +3,8 @@ package com.adriankhor.spotifyview;
 import android.net.Uri;
 import android.util.Log;
 
+import com.adriankhor.spotifyview.model.SpotifyTrack;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;

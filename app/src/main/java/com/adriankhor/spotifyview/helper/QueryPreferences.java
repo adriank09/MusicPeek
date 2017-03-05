@@ -1,4 +1,4 @@
-package com.adriankhor.spotifyview;
+package com.adriankhor.spotifyview.helper;
 
 import android.content.Context;
 import android.preference.PreferenceManager;

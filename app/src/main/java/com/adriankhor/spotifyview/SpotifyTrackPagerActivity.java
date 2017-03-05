@@ -1,6 +1,5 @@
 package com.adriankhor.spotifyview;
 
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -12,11 +11,12 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.util.Log;
+
+import com.adriankhor.spotifyview.helper.QueryPreferences;
+import com.adriankhor.spotifyview.model.SpotifyTrack;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Created by adriank09 on 05/03/2017.
