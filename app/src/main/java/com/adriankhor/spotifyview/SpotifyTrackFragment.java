@@ -54,6 +54,7 @@ public class SpotifyTrackFragment extends Fragment {
     private static MediaPlayer mMediaPlayer;
     private static ProgressDialog mProgressDialog;
 
+    // creates a new instance with bundle containing track Uri
     public static SpotifyTrackFragment newInstance(Uri trackUri) {
         Bundle args = new Bundle();
         args.putParcelable(ARG_URI, trackUri);

@@ -35,7 +35,9 @@ public class ListenFeedFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
+        setActivityTitle(getString(R.string.listen_feed_activity_title));
 
+        // fetch all feed entries from DB async
         new FetchFeedTask().execute();
     }
 
@@ -47,14 +49,11 @@ public class ListenFeedFragment extends Fragment {
         mRecyclerView = (RecyclerView) v.findViewById(R.id.fragment_listen_feed_recycler_view);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
-        setActivityTitle(getString(R.string.listen_feed_activity_title));
-
-
-
         return v;
     }
 
     /***** private class *****/
+    // holder for the RecyclerView for each feed item
     private class ListenFeedHolder extends RecyclerView.ViewHolder {
 
         private TextView mTrackName;
@@ -70,6 +69,7 @@ public class ListenFeedFragment extends Fragment {
 
         }
 
+        // binds data
         public void bindListenFeed(ListenFeed feed) {
             mTrackName.setText(feed.getName());
             mArtistName.setText(feed.getArtistName());
@@ -78,14 +78,11 @@ public class ListenFeedFragment extends Fragment {
 
     }
 
+    // adapter for the ListenFeed RecyclerView
     private class ListenFeedAdapter extends RecyclerView.Adapter<ListenFeedHolder> {
-
         private ListenFeedDbAction db = ListenFeedDbAction.newInstance(getActivity());
 
-        public ListenFeedAdapter() {
-            mListenFeeds = db.getAllFeedEntries();
-        }
-
+        // inflates the feed item into view and prep it for RecyclerView
         @Override
         public ListenFeedHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             LayoutInflater inflater = LayoutInflater.from(getActivity());
@@ -94,6 +91,7 @@ public class ListenFeedFragment extends Fragment {
             return new ListenFeedHolder(v);
         }
 
+        // binds the feed data into the holder
         @Override
         public void onBindViewHolder(ListenFeedHolder holder, int position) {
             ListenFeed feed = mListenFeeds.get(position);
@@ -108,11 +106,15 @@ public class ListenFeedFragment extends Fragment {
     }
 
     // helper methods
+    //
+
+    // sets the activity title for this activity
     private void setActivityTitle(String text) {
         ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(text);
     }
 
     /*** private class ***/
+    // fetches all feed entries from database
     private class FetchFeedTask extends AsyncTask<Void, Void, List<ListenFeed>> {
         @Override
         protected List<ListenFeed> doInBackground(Void... params) {
@@ -123,12 +125,14 @@ public class ListenFeedFragment extends Fragment {
 
         @Override
         protected void onPostExecute(List<ListenFeed> listenFeeds) {
+            // sets the retrieved feeds into the main List<ListenFeed> list
             mListenFeeds = listenFeeds;
             setupAdapter();
 
         }
     }
 
+    // sets up the adapter for recyclerview
     private void setupAdapter() {
         if(isAdded()) {
             mRecyclerView.setAdapter(new ListenFeedAdapter());
