@@ -15,6 +15,8 @@ import android.widget.TextView;
 import com.adriankhor.spotifyview.database.ListenFeedDbAction;
 import com.adriankhor.spotifyview.model.ListenFeed;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -119,8 +121,11 @@ public class ListenFeedFragment extends Fragment {
         @Override
         protected List<ListenFeed> doInBackground(Void... params) {
             ListenFeedDbAction db = ListenFeedDbAction.newInstance(getActivity());
+            List<ListenFeed> lists = db.getAllFeedEntries();
 
-            return db.getAllFeedEntries();
+            // reverse the order of all feeds - entries should display from latest to oldest
+            Collections.reverse(lists);
+            return lists;
         }
 
         @Override

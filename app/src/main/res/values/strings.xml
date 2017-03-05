@@ -5,6 +5,11 @@
 
     <string name="view_feed">View Listen Feed</string>
 
+    <string name="share">Share</string>
+
     <string name="search">Search</string>
     <string name="clear_search">Clear Search</string>
+
+    <string name="message_currently_listening_to">
+        I\'m currently listening to %1$s by %2$s. Thought you might like it!  Click this link to listen to its preview: %3$s</string>
 </resources>

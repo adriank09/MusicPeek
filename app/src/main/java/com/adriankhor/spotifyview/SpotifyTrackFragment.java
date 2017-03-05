@@ -2,6 +2,7 @@ package com.adriankhor.spotifyview;
 
 import android.app.ProgressDialog;
 import android.content.ContentValues;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.AudioManager;
@@ -16,6 +17,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
@@ -49,10 +51,13 @@ public class SpotifyTrackFragment extends Fragment {
     private Uri mTrackUri;
 
     private ImageButton mPauseButton;
+    private Button mShareButton;
 
     private static SpotifyTrack mSpotifyTrack;
     private static MediaPlayer mMediaPlayer;
     private static ProgressDialog mProgressDialog;
+
+    protected static String mPreviewURL;
 
     // creates a new instance with bundle containing track Uri
     public static SpotifyTrackFragment newInstance(Uri trackUri) {
@@ -115,6 +120,30 @@ public class SpotifyTrackFragment extends Fragment {
             }
         });
 
+        mShareButton = (Button) v.findViewById(R.id.spotify_track_playing_share);
+        mShareButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // message title
+                String title = "Listen to this song!";
+
+                // message content
+                String text = getString(R.string.message_currently_listening_to,
+                        mTrackName.getText(),
+                        mArtistName.getText(),
+                        mPreviewURL);
+
+                Intent i = new Intent(Intent.ACTION_SEND);
+                i.setType("text/plain");
+                i.putExtra(Intent.EXTRA_TEXT, text);
+                i.putExtra(Intent.EXTRA_TITLE, title);
+
+                // allow content to be sent by other apps
+                i = Intent.createChooser(i, "Share to others via");
+                startActivity(i);
+
+            }
+        });
         return v;
     }
 
@@ -144,16 +173,19 @@ public class SpotifyTrackFragment extends Fragment {
         @Override
         protected Bitmap doInBackground(Void... params) {
             mSpotifyTrack = new SpotifyAlbumFetcher().getTrack(mTrackUri);
-            String imageURL = mSpotifyTrack.getTrackPreviewImage().toString();
+            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.no_image);
 
-            Bitmap bitmap = null;
+            if(mSpotifyTrack.getTrackPreviewImage() != null) {
+                String imageURL = mSpotifyTrack.getTrackPreviewImage().toString();
 
-            try {
-                InputStream input = new java.net.URL(imageURL).openStream();
-                bitmap = BitmapFactory.decodeStream(input);
-            } catch (Exception e) {
-                e.printStackTrace();
+                try {
+                    InputStream input = new java.net.URL(imageURL).openStream();
+                    bitmap = BitmapFactory.decodeStream(input);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
+
             return bitmap;
         }
 
@@ -171,6 +203,8 @@ public class SpotifyTrackFragment extends Fragment {
             bootstrapPlayer();
 
             addIntoFeed(mSpotifyTrack);
+
+            mPreviewURL = mSpotifyTrack.getPreviewUri().toString();
 
             mProgressDialog.dismiss();
         }
