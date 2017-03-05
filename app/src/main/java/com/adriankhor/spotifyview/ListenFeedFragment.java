@@ -1,0 +1,10 @@
+package com.adriankhor.spotifyview;
+
+import android.support.v4.app.Fragment;
+
+/**
+ * Created by adriank09 on 05/03/2017.
+ */
+
+public class ListenFeedFragment extends Fragment {
+}

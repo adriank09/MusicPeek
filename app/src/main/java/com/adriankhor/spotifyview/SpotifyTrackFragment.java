@@ -3,10 +3,6 @@ package com.adriankhor.spotifyview;
 import android.app.ProgressDialog;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.ColorFilter;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -14,17 +10,18 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 
 /**
  * Created by adriank09 on 04/03/2017.
@@ -43,7 +40,9 @@ public class SpotifyTrackFragment extends Fragment {
     private ImageView mTrackImage;
     private Uri mTrackUri;
 
-    private static SpotifyTrack mSpotifyTrack;
+    private ImageButton mPauseButton;
+    private SeekBar mSeekBar;
+
     private static MediaPlayer mMediaPlayer;
     private static ProgressDialog mProgressDialog;
 
@@ -83,7 +82,29 @@ public class SpotifyTrackFragment extends Fragment {
         mTrackImage = (ImageView) v.findViewById(R.id.spotify_track_playing_image);
         mTrackName = (TextView) v.findViewById(R.id.spotify_track_playing_title);
 
+        mPauseButton = (ImageButton) v.findViewById(R.id.spotify_track_playing_button_pause);
+        mPauseButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(mMediaPlayer.isPlaying()) {
+                    mPauseButton.setImageResource(R.drawable.ic_play_arrow_black_24dp);
+                    mMediaPlayer.pause();
+                } else {
+                    mPauseButton.setImageResource(R.drawable.ic_pause_black_24dp);
+                    mMediaPlayer.start();
+                }
+            }
+        });
+
+
+
         return v;
+    }
+
+    // changes the activity title - based on the track name
+    // ref: http://stackoverflow.com/questions/28954445/set-toolbar-title
+    private void setActivityTitle(String text) {
+        ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(text);
     }
 
     // DownloadImage AsyncTask
@@ -128,18 +149,32 @@ public class SpotifyTrackFragment extends Fragment {
             mTrackName.setText(mSpotifyTrack.getName());
             mArtistName.setText(mSpotifyTrack.getArtistName());
 
-            playTrack();
+            bootstrapPlayer();
+
+            setActivityTitle(mSpotifyTrack.getName());
 
             mProgressDialog.dismiss();
         }
 
-        // plays the preview track
-        private void playTrack() {
+
+        private void bootstrapPlayer() {
             mMediaPlayer = new MediaPlayer();
             mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 
+            mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+                    mPauseButton.setImageResource(R.drawable.ic_play_arrow_black_24dp);
+                }
+            });
+
+            playSpotifyTrack(mSpotifyTrack.getPreviewUri().toString());
+        }
+
+        // plays the preview track
+        private void playSpotifyTrack(String url) {
             try {
-                mMediaPlayer.setDataSource(mSpotifyTrack.getPreviewUri().toString());
+                mMediaPlayer.setDataSource(url);
                 mMediaPlayer.prepare();
                 mMediaPlayer.start();
             }
@@ -147,8 +182,7 @@ public class SpotifyTrackFragment extends Fragment {
                 Log.e(TAG, "Unable to play track", ioe);
             }
         }
-    }
 
-    // MediaPlayer AsyncTask
+    }
 
 }
