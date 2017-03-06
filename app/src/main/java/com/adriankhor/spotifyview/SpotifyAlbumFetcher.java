@@ -3,6 +3,8 @@ package com.adriankhor.spotifyview;
 import android.net.Uri;
 import android.util.Log;
 
+import com.adriankhor.spotifyview.model.SpotifyTrack;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -14,6 +16,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Created by adriank09 on 04/03/2017.
@@ -23,32 +26,69 @@ public class SpotifyAlbumFetcher {
     private static final String TAG = "SpotifyAlbumFetcher";
     private static final String SPOTIFY_WEB_API_BASE_URL = "https://api.spotify.com/";
     private static final String SPOTIFY_WEB_API_SEARCH_URL = "https://api.spotify.com/v1/search";
-
+    private static final String SPOTIFY_WEB_API_TRACK_SEARCH_URL = "https://api.spotify.com/v1/tracks/";
 
 
     public List<SpotifyTrack> fetchTracks() {
-        List<SpotifyTrack> spotifyTracks = new ArrayList<>();
+        // will change later to randomized set of keywords
+        final String alphabet = "abcdefghijklmnopqrstuvwxyz";
+        final int N = alphabet.length();
 
+        Random r = new Random();
+
+        String random = String.valueOf(alphabet.charAt(r.nextInt(N)));
+        return searchTracks(random);
+    }
+
+    public List<SpotifyTrack> searchTracks(String query) {
+        List<SpotifyTrack> spotifyTracks = new ArrayList<>();
         try {
             String url = Uri.parse(SPOTIFY_WEB_API_SEARCH_URL)
                     .buildUpon()
-                    .appendQueryParameter("q","ryuichi") // will change later
+                    .appendQueryParameter("q", query)
                     .appendQueryParameter("type", "track")
                     .build().toString();
             String jsonString = getUrlString(url);
-            Log.i(TAG, "Received JSON: " + jsonString);
-
             JSONObject body = new JSONObject(jsonString);
             parseItems(spotifyTracks, body);
-        } catch (JSONException je) {
+        }
+        catch (JSONException je) {
+            Log.e(TAG, "Failed to parse JSON", je);
+        }
+        catch (IOException ioe) {
+            Log.e(TAG, "Failed to fetch items", ioe);
+        }
+        return spotifyTracks;
+    }
+
+    public SpotifyTrack getTrack(Uri uri) {
+        SpotifyTrack track = null;
+
+        try {
+            String url = SPOTIFY_WEB_API_TRACK_SEARCH_URL + uri.toString();
+            String jsonString = getUrlString(url);
+            JSONObject body = new JSONObject(jsonString);
+
+            if(body != null) {
+                track = new SpotifyTrack();
+
+                track.setArtistName(getArtistName(body));
+                track.setTrackPreviewImage(getPreviewImage(body, 300));
+                track.setName(body.getString("name"));
+                track.setId(body.getString("id"));
+                track.setPreviewUri(Uri.parse(body.getString("preview_url")));
+            }
+        }
+        catch (JSONException je) {
             Log.e(TAG, "Failed to parse JSON", je);
         }
         catch (IOException ioe) {
             Log.e(TAG, "Failed to fetch items", ioe);
         }
 
-        return spotifyTracks;
+        return track;
     }
+
 
     // gets the URL
     public String getUrlString(String urlSpec) throws IOException {
@@ -96,6 +136,10 @@ public class SpotifyAlbumFetcher {
             track.setId(obj.getString("id"));
             track.setName(obj.getString("name"));
 
+            // set the artists name
+            track.setArtistName(getArtistName(obj));
+
+            // set the preview media url link
             Uri previewUrl = Uri.parse(obj.getString("preview_url"));
             track.setPreviewUri(previewUrl);
 
@@ -124,5 +168,24 @@ public class SpotifyAlbumFetcher {
         }
 
         return uri;
+    }
+
+    // gets the artist name for the given track
+    private String getArtistName(JSONObject obj) throws JSONException {
+        JSONArray artistsArray = obj.getJSONArray("artists");
+        StringBuilder stringBuilder = new StringBuilder();
+
+        for(int i=0;i<artistsArray.length();i++) {
+            JSONObject artist = artistsArray.getJSONObject(i);
+
+            if(artistsArray.length() == 1) {
+                stringBuilder.append(artist.getString("name"));
+                break;
+            }
+
+            stringBuilder.append(artist.getString("name")).append(", ");
+        }
+
+        return stringBuilder.toString();
     }
 }

@@ -6,9 +6,10 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/ic_play_arrow_black_24dp"
         android:label="@string/app_name"
         android:supportsRtl="true"
+        android:roundIcon="@drawable/ic_play_arrow_black_24dp"
         android:theme="@style/AppTheme">
         <activity android:name=".MainActivity">
             <intent-filter>
@@ -17,6 +18,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+
+        <activity android:name=".SpotifyTrackActivity" android:parentActivityName=".MainActivity"/>
+        <activity android:name=".ListenFeedActivity"/>
     </application>
 
 </manifest>
