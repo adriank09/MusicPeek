@@ -42,7 +42,7 @@ public class SpotifyViewFragment extends Fragment {
     private List<SpotifyTrack> mSpotifyTracks = new ArrayList<>();
     private ThumbnailDownloader<SpotifyViewHolder> mThumbnailDownloader;
 
-    private ProgressDialog mProgressDialog;
+    private static ProgressDialog mProgressDialog;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -181,10 +181,7 @@ public class SpotifyViewFragment extends Fragment {
             mSpotifyTracks = tracks;
 
             setupAdapter();
-            if(mProgressDialog!=null&&mProgressDialog.isShowing()){
-                Log.i(TAG, "mProgressDialog still showing");
-                mProgressDialog.dismiss();
-            }
+            mProgressDialog.dismiss();
             Log.i(TAG, "onPostExecute end");
         }
     }

@@ -1,5 +1,6 @@
 package com.adriankhor.spotifyview;
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -8,11 +9,16 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.adriankhor.spotifyview.database.ListenFeedDbAction;
+import com.adriankhor.spotifyview.helper.QueryPreferences;
 import com.adriankhor.spotifyview.model.ListenFeed;
 
 import java.util.Collections;
@@ -37,6 +43,7 @@ public class ListenFeedFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
+        setHasOptionsMenu(true);
         setActivityTitle(getString(R.string.listen_feed_activity_title));
 
         // fetch all feed entries from DB async
@@ -52,6 +59,26 @@ public class ListenFeedFragment extends Fragment {
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
         return v;
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.fragment_listen_feed, menu);
+
+
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch(item.getItemId()) {
+            case R.id.menu_feed_clear:
+                clearAllFeedEntries();
+                updateItems();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     /***** private class *****/
@@ -142,5 +169,17 @@ public class ListenFeedFragment extends Fragment {
         if(isAdded()) {
             mRecyclerView.setAdapter(new ListenFeedAdapter());
         }
+    }
+
+    // clear all feed entries
+    private void clearAllFeedEntries() {
+        ListenFeedDbAction db = ListenFeedDbAction.newInstance(getContext());
+        db.deleteAllFeedEntries();
+
+        Toast.makeText(getContext(), "Listen feed entries cleared", Toast.LENGTH_SHORT).show();
+    }
+
+    private void updateItems() {
+        new FetchFeedTask().execute();
     }
 }

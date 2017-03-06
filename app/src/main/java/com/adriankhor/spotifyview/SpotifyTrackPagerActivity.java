@@ -22,6 +22,8 @@ import java.util.List;
  * Created by adriank09 on 05/03/2017.
  */
 
+// deprecated
+
 public class SpotifyTrackPagerActivity extends FragmentActivity {
     private static final String TAG = "SpotifyTrackPagerAct";
     private static final String EXTRA_SPOTIFY_TRACK_ID = "com.adriankhor.spotifyview.spotify_track_id";

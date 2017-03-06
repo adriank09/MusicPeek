@@ -56,6 +56,10 @@ public class ListenFeedDbAction {
         return listenFeeds;
     }
 
+    public void deleteAllFeedEntries() {
+        mDatabase.delete(SpotifyViewFeedTable.NAME, null, null);
+    }
+
     /***** private methods *****/
     // private constructor
     private ListenFeedDbAction(Context context) {

@@ -1,7 +1,10 @@
 package com.adriankhor.spotifyview;
 
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -12,7 +15,9 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.TaskStackBuilder;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -40,10 +45,11 @@ import java.util.Date;
 public class SpotifyTrackFragment extends Fragment {
     private static final String TAG = "SpotifyTrackFragment";
 
-    private static final String ARG_ARTIST_NAME = "spotify_track_artist_name";
-    private static final String ARG_TRACK_NAME = "spotify_track_name";
     private static final String ARG_URI = "spotify_track_url";
-    private static final String ARG_IMAGE = "spotify_track_image";
+
+    private static final String TRACK_POSITION = "spotify_track_position";
+
+    private static final int NOW_PLAYING_ID = 1;
 
     private TextView mArtistName;
     private TextView mTrackName;
@@ -74,6 +80,7 @@ public class SpotifyTrackFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        mMediaPlayer = new MediaPlayer();
         mTrackUri = getArguments().getParcelable(ARG_URI);
 
         new DownloadImage().execute();
@@ -94,6 +101,36 @@ public class SpotifyTrackFragment extends Fragment {
         super.onDestroy();
         if(mMediaPlayer != null) {
             mMediaPlayer.stop();
+        }
+    }
+
+    // save current track playing position before changes in orientation is done
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(TRACK_POSITION, mMediaPlayer.getCurrentPosition());
+        Log.i(TAG, "Position now before rotate:"+mMediaPlayer.getCurrentPosition());
+        //mMediaPlayer.pause();
+
+    }
+
+    @Override
+    public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
+        super.onViewStateRestored(savedInstanceState);
+        if(savedInstanceState != null) {
+            int position = savedInstanceState.getInt(TRACK_POSITION);
+            Log.i(TAG, "Position now after rotate:"+position);
+
+            mMediaPlayer.seekTo(position);
+        }
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        if(savedInstanceState != null) {
+            int position = savedInstanceState.getInt(TRACK_POSITION);
+            mMediaPlayer.seekTo(position);
         }
     }
 
@@ -205,13 +242,20 @@ public class SpotifyTrackFragment extends Fragment {
             addIntoFeed(mSpotifyTrack);
 
             mPreviewURL = mSpotifyTrack.getPreviewUri().toString();
-
+            showNowPlayingNotification(mSpotifyTrack);
             mProgressDialog.dismiss();
         }
 
+        // prepares the player to be played
         private void bootstrapPlayer() {
-            mMediaPlayer = new MediaPlayer();
+
             mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+            mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mp) {
+                    mp.start();
+                }
+            });
 
             mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
@@ -219,7 +263,7 @@ public class SpotifyTrackFragment extends Fragment {
                     mPauseButton.setImageResource(R.drawable.ic_play_arrow_black_24dp);
                 }
             });
-
+            // plays the track
             playSpotifyTrack(mSpotifyTrack.getPreviewUri().toString());
         }
 
@@ -233,6 +277,22 @@ public class SpotifyTrackFragment extends Fragment {
             catch (IOException ioe) {
                 Log.e(TAG, "Unable to play track", ioe);
             }
+        }
+
+        // shows the notification
+        private void showNowPlayingNotification(SpotifyTrack track) {
+
+            NotificationCompat.Builder mBuilder = (NotificationCompat.Builder)
+                    new NotificationCompat.Builder(getContext())
+                    .setSmallIcon(android.R.drawable.ic_media_play)
+                    .setContentTitle("Now Playing")
+                    .setContentText(track.getName() + " by " + track.getArtistName());
+
+            // content intent should be a new, empty one - when tapped in Notification Center, nothing happens (intended)
+            mBuilder.setContentIntent(PendingIntent.getActivity(getContext(), 0, new Intent(), 0));
+            NotificationManager mNotificationManager = (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
+
+            mNotificationManager.notify(NOW_PLAYING_ID, mBuilder.build());
         }
     }
 }

@@ -16,6 +16,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Created by adriank09 on 04/03/2017.
@@ -30,7 +31,13 @@ public class SpotifyAlbumFetcher {
 
     public List<SpotifyTrack> fetchTracks() {
         // will change later to randomized set of keywords
-        return searchTracks("mika");
+        final String alphabet = "abcdefghijklmnopqrstuvwxyz";
+        final int N = alphabet.length();
+
+        Random r = new Random();
+
+        String random = String.valueOf(alphabet.charAt(r.nextInt(N)));
+        return searchTracks(random);
     }
 
     public List<SpotifyTrack> searchTracks(String query) {
